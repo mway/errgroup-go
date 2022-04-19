@@ -66,13 +66,16 @@ func TestErrGroupFirst(t *testing.T) {
 		err       = errgroup.First(
 			func() error {
 				<-wait
+				time.Sleep(100 * time.Millisecond)
 				return errA
 			},
 			func() error {
-				close(wait)
+				defer close(wait)
 				return errB
 			},
 			func() error {
+				<-wait
+				time.Sleep(100 * time.Millisecond)
 				return errC
 			},
 		)
