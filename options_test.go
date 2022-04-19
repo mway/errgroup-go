@@ -1,6 +1,7 @@
 package errgroup_test
 
 import (
+	"context"
 	"io"
 	"testing"
 
@@ -10,11 +11,17 @@ import (
 
 func TestOptionsWith(t *testing.T) {
 	var (
-		previous = errgroup.DefaultOptions().With(
+		base     = errgroup.DefaultOptions()
+		previous = base.With(
 			errgroup.WithFirstOnly(),
-			errgroup.WithIgnoredErrors(io.EOF),
+			errgroup.WithIgnoredErrors(context.Canceled),
 		)
-		updated = previous.With(errgroup.DefaultOptions().With(errgroup.WithInline()))
+		updated = previous.With(
+			errgroup.DefaultOptions().With(
+				errgroup.WithInline(),
+				errgroup.WithIgnoredErrors(io.EOF),
+			),
+		)
 	)
 
 	require.True(t, previous.FirstOnly)
@@ -23,5 +30,5 @@ func TestOptionsWith(t *testing.T) {
 
 	require.False(t, updated.FirstOnly)
 	require.True(t, updated.Inline)
-	require.Len(t, updated.IgnoredErrors, 1)
+	require.Len(t, updated.IgnoredErrors, 2)
 }
