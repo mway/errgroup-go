@@ -132,7 +132,7 @@ func All(fns ...ErrFunc) error {
 	return do(fns)
 }
 
-// All executes all of the given functions serially in the calling goroutine,
+// AllInline executes all of the given functions serially in the calling goroutine,
 // and collects and combines all of their returned errors.
 func AllInline(fns ...ErrFunc) error {
 	return do(fns, WithInline())
