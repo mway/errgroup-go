@@ -1,6 +1,7 @@
 package errgroup_test
 
 import (
+	"context"
 	"errors"
 	"io"
 	"testing"
@@ -135,4 +136,18 @@ func TestErrGroupNoErrors(t *testing.T) {
 	)
 
 	require.NoError(t, err)
+}
+
+func TestWithoutContext(t *testing.T) {
+	var (
+		err = errors.New("foo")
+		fnA = func() error {
+			return err
+		}
+		fnB = errgroup.WithoutContext(func(context.Context) error {
+			return err
+		})
+	)
+
+	require.ErrorIs(t, fnB(), fnA())
 }
