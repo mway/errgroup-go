@@ -17,21 +17,8 @@ var (
 	errC = errors.New("c")
 )
 
-func TestErrGroupNoErrors(t *testing.T) {
-	var g1 errgroup.Group
-
-	g1.Add(
-		func() error { return nil },
-		func() error { return nil },
-		func() error { return nil },
-	)
-
-	require.NoError(t, g1.Wait())
-}
-
-func TestErrGroupParallel(t *testing.T) {
-	var g errgroup.Group
-	g.Add(
+func TestErrGroup(t *testing.T) {
+	err := errgroup.All(
 		func() error {
 			time.Sleep(100 * time.Millisecond)
 			return errA
@@ -44,53 +31,73 @@ func TestErrGroupParallel(t *testing.T) {
 			return errC
 		},
 	)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, errA.Error())
+	require.ErrorContains(t, err, errB.Error())
+	require.ErrorContains(t, err, errC.Error())
 }
 
 func TestErrGroupInline(t *testing.T) {
 	var (
 		expectErr = multierr.Combine(errA, errB, errC)
-		g         = errgroup.New(errgroup.WithInline())
-	)
-
-	g.Add(
-		func() error {
-			time.Sleep(100 * time.Millisecond)
-			return errA
-		},
-		func() error {
-			time.Sleep(50 * time.Millisecond)
-			return errB
-		},
-		func() error {
-			return errC
-		},
-	)
-
-	require.EqualError(t, g.Wait(), expectErr.Error())
-}
-
-func TestErrGroupFirstOnly(t *testing.T) {
-	var (
-		expectErr = errA
-		g         = errgroup.New(
-			errgroup.WithInline(),
-			errgroup.WithFirstOnly(),
+		err       = errgroup.AllInline(
+			func() error {
+				time.Sleep(100 * time.Millisecond)
+				return errA
+			},
+			func() error {
+				time.Sleep(50 * time.Millisecond)
+				return errB
+			},
+			func() error {
+				return errC
+			},
 		)
 	)
 
-	g.Add(
-		func() error {
-			return errA
-		},
-		func() error {
-			return errB
-		},
-		func() error {
-			return errC
-		},
+	require.EqualError(t, err, expectErr.Error())
+}
+
+func TestErrGroupFirst(t *testing.T) {
+	var (
+		expectErr = errB
+		wait      = make(chan struct{})
+		err       = errgroup.First(
+			func() error {
+				<-wait
+				return errA
+			},
+			func() error {
+				close(wait)
+				return errB
+			},
+			func() error {
+				return errC
+			},
+		)
 	)
 
-	require.EqualError(t, g.Wait(), expectErr.Error())
+	require.EqualError(t, err, expectErr.Error())
+}
+
+func TestErrGroupFirstInline(t *testing.T) {
+	var (
+		expectErr = errA
+		err       = errgroup.FirstInline(
+			func() error {
+				return errA
+			},
+			func() error {
+				return errB
+			},
+			func() error {
+				return errC
+			},
+		)
+	)
+
+	require.EqualError(t, err, expectErr.Error())
 }
 
 func TestErrGroupIgnoredErrors(t *testing.T) {
@@ -115,4 +122,14 @@ func TestErrGroupIgnoredErrors(t *testing.T) {
 	)
 
 	require.EqualError(t, g.Wait(), expectErr.Error())
+}
+
+func TestErrGroupNoErrors(t *testing.T) {
+	err := errgroup.All(
+		func() error { return nil },
+		func() error { return nil },
+		func() error { return nil },
+	)
+
+	require.NoError(t, err)
 }

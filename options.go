@@ -35,6 +35,7 @@ func (o Options) With(opts ...Option) Options {
 
 func (o Options) apply(opts *Options) {
 	opts.FirstOnly = o.FirstOnly
+	opts.Inline = o.Inline
 
 	if o.IgnoredErrors != nil {
 		opts.IgnoredErrors = append(opts.IgnoredErrors, o.IgnoredErrors...)
