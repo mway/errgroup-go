@@ -1,3 +1,7 @@
+### This library has been moved.
+
+Please use [go.mway.dev/errors/errgroup](https://go.mway.dev/errors/errgroup) instead.
+
 [![GoDoc][doc-img]][doc-link] [![Build Status][ci-img]][ci-link] [![Coverage Status][cov-img]][cov-link] [![Report Card][report-img]][report-link]
 
 [doc-img]: https://pkg.go.dev/badge/go.mway.dev/errgroup
